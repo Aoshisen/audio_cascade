@@ -41,12 +41,11 @@ impl AudioCapture {
         let stream = device.build_input_stream(
             &config,
             move |data: &[f32], _: &InputCallbackInfo| {
-                if channels == 2 {
-                    let mono: Vec<f32> = data.chunks(2).map(|ch| (ch[0] + ch[1]) * 0.5).collect();
-                    let _ = tx.send(mono);
-                } else {
-                    let _ = tx.send(data.to_vec());
-                }
+                let mono: Vec<f32> = data
+                    .chunks(channels as usize)
+                    .map(|ch| ch.iter().sum::<f32>() / channels as f32)
+                    .collect();
+                let _ = tx.send(mono);
             },
             move |err| eprintln!("捕获错误: {}", err),
             None,
